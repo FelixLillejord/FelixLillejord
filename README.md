@@ -1,6 +1,8 @@
-- 👋 Hi, I’m @FelixLillejord
-- 👀 I’m interested in learning Machine learning and general data science.
-- 🌱 I’m currently learning python for data analytics, R and advanced SQL
+👋 Hi, I’m @FelixLillejord
+
+People Analyst | Passionate about HR Tech & Data | Aspiring to Grow in Data Science 
+
+🌱 I’m currently learning advanced SQL, basics of machine learning and predictive analytics
 
 <!---
 FelixLillejord/FelixLillejord is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
