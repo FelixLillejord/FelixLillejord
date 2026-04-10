@@ -39,6 +39,22 @@ Power BI / Excel      ← Dashboards & self-service analytics
 - **Headcount & Workforce** — Active employees, FTEs, org structure, new hires, turnover
 - **Talent Acquisition** — Recruiting funnel, time-to-fill, time-to-hire, source of hire
 
+## Fact Table Design
+
+There are **2 fact tables** — no separate turnover fact needed:
+
+| Fact | Grain | Covers |
+|---|---|---|
+| `FactHeadcount` | 1 row per employee per month-end | Active headcount, new hires, terminations (via flags) |
+| `FactRecruitment` | 1 row per application | Hiring funnel, time-to-fill, source of hire |
+
+`FactHeadcount` uses three event flags to capture all workforce movements in one place:
+- `IsActive` — was the employee active at month-end?
+- `IsNewHire` — did they start this month?
+- `IsTerminatedThisMonth` — did they leave this month?
+
+Turnover rate, voluntary attrition, and average tenure at exit are all derived from `FactHeadcount`.
+
 ## Folder Structure
 
 ```
@@ -48,7 +64,7 @@ HR-DataWarehouse/
 │   ├── 00_create_databases.sql   # Create HRDB_Staging + HRDB_DW
 │   ├── staging/                  # STG_* tables (raw Agresso data)
 │   ├── dimensions/               # Dim* tables (star schema dimensions)
-│   ├── facts/                    # Fact* tables (star schema facts)
+│   ├── facts/                    # FactHeadcount + FactRecruitment
 │   └── stored_procedures/        # ETL load procedures
 ├── ssas/                         # Tabular model design + DAX measures
 └── powerbi/                      # Dashboard design + Power BI DAX

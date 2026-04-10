@@ -22,24 +22,32 @@ KPIs, and row-level security.
 
 Define in the Diagram view (Model → Diagram View):
 
-| From Table | Column | To Table | Column | Cardinality |
-|---|---|---|---|---|
-| FactHeadcount | DateKey | DimDate | DateKey | Many → One |
-| FactHeadcount | EmployeeKey | DimEmployee | EmployeeKey | Many → One |
-| FactHeadcount | DepartmentKey | DimDepartment | DepartmentKey | Many → One |
-| FactHeadcount | JobRoleKey | DimJobRole | JobRoleKey | Many → One |
-| FactHeadcount | LocationKey | DimLocation | LocationKey | Many → One |
-| FactTurnover | TerminationDateKey | DimDate | DateKey | Many → One |
-| FactTurnover | EmployeeKey | DimEmployee | EmployeeKey | Many → One |
-| FactTurnover | DepartmentKey | DimDepartment | DepartmentKey | Many → One |
-| FactTurnover | TerminationReasonKey | DimTerminationReason | TerminationReasonKey | Many → One |
-| FactRecruitment | ApplicationDateKey | DimDate | DateKey | Many → One |
-| FactRecruitment | DepartmentKey | DimDepartment | DepartmentKey | Many → One |
-| FactRecruitment | JobRoleKey | DimJobRole | JobRoleKey | Many → One |
-| FactRecruitment | RecruitmentSourceKey | DimRecruitmentSource | RecruitmentSourceKey | Many → One |
+| From Table | Column | To Table | Column | Cardinality | Active? |
+|---|---|---|---|---|---|
+| FactHeadcount | DateKey | DimDate | DateKey | Many → One | Yes |
+| FactHeadcount | EmployeeKey | DimEmployee | EmployeeKey | Many → One | Yes |
+| FactHeadcount | DepartmentKey | DimDepartment | DepartmentKey | Many → One | Yes |
+| FactHeadcount | JobRoleKey | DimJobRole | JobRoleKey | Many → One | Yes |
+| FactHeadcount | LocationKey | DimLocation | LocationKey | Many → One | Yes |
+| FactHeadcount | TerminationReasonKey | DimTerminationReason | TerminationReasonKey | Many → One | **No (inactive)** |
+| FactRecruitment | ApplicationDateKey | DimDate | DateKey | Many → One | Yes |
+| FactRecruitment | DepartmentKey | DimDepartment | DepartmentKey | Many → One | Yes |
+| FactRecruitment | JobRoleKey | DimJobRole | JobRoleKey | Many → One | Yes |
+| FactRecruitment | RecruitmentSourceKey | DimRecruitmentSource | RecruitmentSourceKey | Many → One | Yes |
 
-**Note**: FactTurnover and FactRecruitment both use DimDate — create role-playing
-date dimensions or use inactive relationships with `USERELATIONSHIP()` in DAX.
+**TerminationReasonKey is an inactive relationship** because most rows in FactHeadcount
+have `TerminationReasonKey = NULL` (active employees). Activate it with
+`USERELATIONSHIP()` inside turnover-specific DAX measures:
+
+```dax
+Voluntary Terminations =
+CALCULATE(
+    COUNTROWS(FactHeadcount),
+    FactHeadcount[IsTerminatedThisMonth] = TRUE,
+    USERELATIONSHIP(FactHeadcount[TerminationReasonKey], DimTerminationReason[TerminationReasonKey]),
+    DimTerminationReason[IsVoluntary] = TRUE
+)
+```
 
 ---
 

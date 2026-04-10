@@ -205,37 +205,32 @@ How candidates found the organisation.
 ## FACT TABLES
 
 ### FactHeadcount
-Monthly snapshot of the active workforce. One row per employee per month-end.
+Workforce snapshot with movement flags. One row per employee per month-end.
+Covers active headcount, new hires, and terminations — no separate FactTurnover table.
 
 | Column | Type | Description |
 |---|---|---|
 | HeadcountKey | INT | Surrogate key (PK) |
-| DateKey | INT | FK → DimDate (month-end date) |
+| DateKey | INT | FK → DimDate (month-end snapshot date) |
 | EmployeeKey | INT | FK → DimEmployee |
 | DepartmentKey | INT | FK → DimDepartment |
 | JobRoleKey | INT | FK → DimJobRole |
 | LocationKey | INT | FK → DimLocation |
-| IsActive | BIT | 1 = active at month-end |
-| FTEValue | DECIMAL(5,2) | FTE contribution (0.00–1.00) |
+| TerminationReasonKey | INT | FK → DimTerminationReason (NULL if IsActive = 1) |
+| IsActive | BIT | 1 = active at month-end; 0 = terminated during month |
 | IsNewHire | BIT | 1 = hired within this snapshot month |
+| IsTerminatedThisMonth | BIT | 1 = terminated within this snapshot month |
+| FTEValue | DECIMAL(5,2) | FTE contribution (0.00–1.00) |
+| TenureDays | INT | Days from HireDate to month-end (or to termination date) |
 | ETLLoadDate | DATETIME | Load timestamp |
 
-### FactTurnover
-One row per termination event.
-
-| Column | Type | Description |
-|---|---|---|
-| TurnoverKey | INT | Surrogate key (PK) |
-| TerminationDateKey | INT | FK → DimDate |
-| HireDateKey | INT | FK → DimDate (original hire date) |
-| EmployeeKey | INT | FK → DimEmployee (current version at termination) |
-| DepartmentKey | INT | FK → DimDepartment (at time of termination) |
-| JobRoleKey | INT | FK → DimJobRole (at time of termination) |
-| LocationKey | INT | FK → DimLocation |
-| TerminationReasonKey | INT | FK → DimTerminationReason |
-| IsVoluntary | BIT | 1 = voluntary resignation |
-| TenureDays | INT | Days from HireDate to TerminationDate |
-| ETLLoadDate | DATETIME | Load timestamp |
+**Row combinations:**
+| IsActive | IsNewHire | IsTerminatedThisMonth | Meaning |
+|---|---|---|---|
+| 1 | 0 | 0 | Active continuing employee |
+| 1 | 1 | 0 | New hire, still active |
+| 0 | 0 | 1 | Existing employee who terminated this month |
+| 0 | 1 | 1 | New hire who also terminated this month (rare) |
 
 ### FactRecruitment
 One row per application. Stage updated as applicant progresses.

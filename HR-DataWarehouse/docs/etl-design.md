@@ -133,19 +133,16 @@ HRDB_ETL.sln                      Visual Studio SSIS project
 ```
 [Execute SQL: sp_LoadFactHeadcount]
     ↓
-[Execute SQL: sp_LoadFactTurnover]
-    ↓
 [Execute SQL: sp_LoadFactRecruitment]
 ```
 
-**FactHeadcount load approach**:
+**FactHeadcount load approach (2-pass)**:
 - Run at month-end (or parameterised by `@SnapshotDate`)
-- Check if snapshot already exists for the given `DateKey` → skip if so
-- INSERT one row per active employee at the snapshot date
-
-**FactTurnover load approach**:
-- Incremental: only load terminations with `TerminationDate >= @LastRunDate`
-- Resolve `TerminationReasonKey` via lookup on Agresso reason code
+- Guard: skip if snapshot already exists for the given `DateKey`
+- **Pass 1**: INSERT one row per active employee at the snapshot date (`IsActive = 1`)
+- **Pass 2**: INSERT one row per employee who terminated within the snapshot month
+  (`IsTerminatedThisMonth = 1`, `IsActive = 0`, `TerminationReasonKey` populated)
+- No separate `sp_LoadFactTurnover` — termination rows are part of the headcount snapshot
 
 **FactRecruitment load approach**:
 - Incremental: load new/updated application records since `@LastRunDate`

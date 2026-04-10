@@ -49,26 +49,36 @@ CALCULATE(
 
 ## Turnover & Retention
 
+All turnover measures use `FactHeadcount` with the `IsTerminatedThisMonth` flag.
+The `TerminationReasonKey` relationship is inactive — activate it with `USERELATIONSHIP()`.
+
 ```dax
 -- Total terminations in period
 Terminations =
-COUNTROWS(FactTurnover)
+CALCULATE(
+    COUNTROWS(FactHeadcount),
+    FactHeadcount[IsTerminatedThisMonth] = TRUE
+)
 
--- Voluntary terminations
+-- Voluntary terminations (uses inactive relationship to DimTerminationReason)
 Voluntary Terminations =
 CALCULATE(
-    COUNTROWS(FactTurnover),
-    FactTurnover[IsVoluntary] = TRUE
+    COUNTROWS(FactHeadcount),
+    FactHeadcount[IsTerminatedThisMonth] = TRUE,
+    USERELATIONSHIP(FactHeadcount[TerminationReasonKey], DimTerminationReason[TerminationReasonKey]),
+    DimTerminationReason[IsVoluntary] = TRUE
 )
 
 -- Involuntary terminations
 Involuntary Terminations =
 CALCULATE(
-    COUNTROWS(FactTurnover),
-    FactTurnover[IsVoluntary] = FALSE
+    COUNTROWS(FactHeadcount),
+    FactHeadcount[IsTerminatedThisMonth] = TRUE,
+    USERELATIONSHIP(FactHeadcount[TerminationReasonKey], DimTerminationReason[TerminationReasonKey]),
+    DimTerminationReason[IsVoluntary] = FALSE
 )
 
--- Overall turnover rate (industry standard: terminations / avg headcount)
+-- Overall turnover rate (terminations / avg headcount)
 Turnover Rate % =
 DIVIDE(
     [Terminations],
@@ -86,7 +96,10 @@ DIVIDE(
 
 -- Average tenure at termination (days)
 Avg Tenure at Termination (Days) =
-AVERAGE(FactTurnover[TenureDays])
+CALCULATE(
+    AVERAGE(FactHeadcount[TenureDays]),
+    FactHeadcount[IsTerminatedThisMonth] = TRUE
+)
 
 -- Average tenure at termination (years)
 Avg Tenure at Termination (Years) =

@@ -35,9 +35,9 @@ The HR DW follows a classic **3-layer architecture** with a star schema at the c
 │                                                          │
 │  DIMENSIONS                  FACTS                       │
 │  ├── DimDate                 ├── FactHeadcount            │
-│  ├── DimEmployee (SCD2)      ├── FactTurnover             │
-│  ├── DimDepartment           └── FactRecruitment          │
-│  ├── DimJobRole                                          │
+│  ├── DimEmployee (SCD2)      │   (active + terminated     │
+│  ├── DimDepartment           │    flags in one table)     │
+│  ├── DimJobRole              └── FactRecruitment          │
 │  ├── DimLocation                                         │
 │  ├── DimTerminationReason                                │
 │  └── DimRecruitmentSource                               │
@@ -86,8 +86,15 @@ Includes both calendar year and fiscal year attributes (fiscal year configurable
 | Fact | Grain | Load Frequency |
 |---|---|---|
 | FactHeadcount | 1 row per employee per month-end snapshot | Monthly |
-| FactTurnover | 1 row per termination event | Daily/incremental |
 | FactRecruitment | 1 row per application event | Daily/incremental |
+
+**FactHeadcount movement flags** (no separate FactTurnover table):
+- `IsActive = 1` — employee was active at month-end
+- `IsNewHire = 1` — employee was hired within the snapshot month
+- `IsTerminatedThisMonth = 1` — employee terminated within the snapshot month (`IsActive = 0`)
+- `TerminationReasonKey` — populated for terminated rows; links to `DimTerminationReason`
+
+This pattern keeps turnover, headcount, and new-hire metrics queryable from one table.
 
 ---
 

@@ -36,10 +36,17 @@ CALCULATE(
 New Hires =
 CALCULATE(COUNTROWS(FactHeadcount), FactHeadcount[IsNewHire] = 1)
 
-Terminations = COUNTROWS(FactTurnover)
+-- No separate FactTurnover — filter on IsTerminatedThisMonth flag in FactHeadcount
+Terminations =
+CALCULATE(COUNTROWS(FactHeadcount), FactHeadcount[IsTerminatedThisMonth] = 1)
 
 Voluntary Terminations =
-CALCULATE(COUNTROWS(FactTurnover), FactTurnover[IsVoluntary] = 1)
+CALCULATE(
+    COUNTROWS(FactHeadcount),
+    FactHeadcount[IsTerminatedThisMonth] = 1,
+    USERELATIONSHIP(FactHeadcount[TerminationReasonKey], DimTerminationReason[TerminationReasonKey]),
+    DimTerminationReason[IsVoluntary] = TRUE
+)
 
 Turnover Rate % =
 VAR AvgHeadcount =
